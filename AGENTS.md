@@ -23,7 +23,12 @@ npm run lint     # Run ESLint
 
 ### Key Patterns
 
-**Database**: All tables prefixed with `recipes_` (recipes_app_settings, recipes_recipes, recipes_ingredients). Raw SQL queries in `lib/db/queries/`. Migration in `lib/db/migrations/001_initial.sql`.
+**Database**: All tables prefixed with `recipes_` (recipes_app_settings, recipes_recipes, recipes_ingredients, recipes_tags, recipes_recipe_tags). Raw SQL queries in `lib/db/queries/`.
+
+**Migrations** (`lib/db/migrations/`):
+- `000_all.sql` is the canonical full schema for fresh database setup — always keep it in sync with the current DB structure
+- When changing DB structure: update `000_all.sql` with the new schema, AND add a temporary `001_xxx.sql` (etc.) migration for existing databases that already ran the previous `000_all.sql`
+- Temporary migrations (001+) can be deleted once applied to all environments
 
 **Authentication**: Simple shared PIN authentication. PIN hashed with scrypt (`lib/auth/pin.ts`). JWT sessions stored in cookies (`lib/auth/session.ts`). Middleware protects all routes except `/login`.
 
