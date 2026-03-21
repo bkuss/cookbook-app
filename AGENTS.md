@@ -33,7 +33,7 @@ npm run lint     # Run ESLint
 **Authentication**: Simple shared PIN authentication. PIN hashed with scrypt (`lib/auth/pin.ts`). JWT sessions stored in cookies (`lib/auth/session.ts`). Middleware protects all routes except `/login`.
 
 **AI Features** (`lib/replicate/client.ts`):
-- Recipe extraction from images/URLs using `openai/gpt-5.2` model
+- Recipe extraction from images/URLs using `openai/gpt-5.4` model
 - Image generation using `google/nano-banana` model (16:9 aspect ratio)
 
 **Recipe Data Flow**:

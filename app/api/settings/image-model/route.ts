@@ -27,7 +27,8 @@ export async function POST(req: Request) {
       'google/nano-banana-pro',
       'black-forest-labs/flux-schnell',
       'bytedance/seedream-4',
-      'ideogram-ai/ideogram-v3-turbo'
+      'ideogram-ai/ideogram-v3-turbo',
+      'openai/gpt-image-1.5'
     ];
 
     if (!validModels.includes(model)) {

@@ -88,19 +88,15 @@ import { getSetting } from '../db/queries/settings';
 export async function extractRecipeFromImage(imageBase64: string, strict: boolean = false): Promise<RecipeInput> {
   const imageUrl = imageBase64.startsWith('data:') ? imageBase64 : `data:image/jpeg;base64,${imageBase64}`;
 
-  const model = await getSetting('recipe_model') || 'openai/gpt-5.2';
+  const model = await getSetting('recipe_model') || 'openai/gpt-5.4';
 
   // Define input based on model
   const input: Record<string, unknown> = {
     prompt: IMAGE_RECIPE_PROMPT(strict),
   };
 
-  if (model === 'openai/gpt-5-mini') {
-    // gpt-5 mini uses image_input array
-    input.image_input = [imageUrl];
-    input.reasoning_effort = 'low';
-  } else if (model === 'openai/gpt-5.2') {
-    // gpt-5.2 uses image_input array
+  if (model === 'openai/gpt-5.4') {
+    // gpt-5.4 uses image_input array
     input.image_input = [imageUrl];
     input.reasoning_effort = 'low';
   } else if (model === 'anthropic/claude-4.5-sonnet') {
@@ -123,15 +119,13 @@ export async function extractRecipeFromText(content: string, strict: boolean = f
   // Truncate content if too long
   const truncatedContent = content.length > 10000 ? content.substring(0, 10000) : content;
 
-  const model = await getSetting('recipe_model') || 'openai/gpt-5.2';
+  const model = await getSetting('recipe_model') || 'openai/gpt-5.4';
 
   const input: Record<string, unknown> = {
     prompt: `${URL_RECIPE_PROMPT(strict)}\n\n${truncatedContent}`,
   };
 
-  if (model === 'openai/gpt-5-mini') {
-    input.reasoning_effort = 'low';
-  } else if (model === 'openai/gpt-5.2') {
+  if (model === 'openai/gpt-5.4') {
     input.reasoning_effort = 'low';
   } else if (model === 'anthropic/claude-4.5-sonnet') {
     input.max_tokens = 2048;
@@ -161,6 +155,10 @@ export async function generateRecipeImage(title: string, ingredients: string[]):
     input.output_format = 'webp';
   } else if (imageModel === 'ideogram-ai/ideogram-v3-turbo') {
     input.style_type = 'Realistic';
+  } else if (imageModel === 'openai/gpt-image-1.5') {
+    input.aspect_ratio = '3:2';
+    input.quality = 'medium';
+    input.output_format = 'webp';
   }
 
   const rawOutput = await replicate.run(imageModel as `${string}/${string}`, { input });
@@ -220,15 +218,13 @@ ${recipeJson}
 Benutzeranweisung:
 ${userRequest}`;
 
-  const model = await getSetting('recipe_model') || 'openai/gpt-5.2';
+  const model = await getSetting('recipe_model') || 'openai/gpt-5.4';
 
   const input: Record<string, unknown> = {
     prompt,
   };
 
-  if (model === 'openai/gpt-5-mini') {
-    input.reasoning_effort = 'low';
-  } else if (model === 'openai/gpt-5.2') {
+  if (model === 'openai/gpt-5.4') {
     input.reasoning_effort = 'low';
   } else if (model === 'anthropic/claude-4.5-sonnet') {
     input.max_tokens = 2048;

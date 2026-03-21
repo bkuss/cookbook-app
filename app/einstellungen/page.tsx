@@ -240,8 +240,7 @@ export default function SettingsPage() {
                   onChange={handleModelChange}
                   disabled={modelLoading}
                 >
-                  <option value="openai/gpt-5-mini">GPT-5 Mini</option>
-                  <option value="openai/gpt-5.2">GPT-5.2</option>
+                  <option value="openai/gpt-5.4">GPT-5.4</option>
                   <option value="google/gemini-3-pro">Google Gemini 3 Pro</option>
                   <option value="google/gemini-2.5-flash">Google Gemini 2.5 Flash</option>
                   <option value="anthropic/claude-4.5-sonnet">Anthropic Claude 4.5 Sonnet</option>
@@ -277,6 +276,7 @@ export default function SettingsPage() {
                   <option value="black-forest-labs/flux-schnell">FLUX Schnell</option>
                   <option value="bytedance/seedream-4">Seedream 4</option>
                   <option value="ideogram-ai/ideogram-v3-turbo">Ideogram v3 Turbo</option>
+                  <option value="openai/gpt-image-1.5">GPT Image 1.5</option>
                 </select>
                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-muted-foreground">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
