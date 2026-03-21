@@ -108,6 +108,9 @@ export async function extractRecipeFromImage(imageBase64: string, strict: boolea
     input.images = [imageUrl];
   } else if (model === 'google/gemini-2.5-flash') {
     input.images = [imageUrl];
+  } else {
+    // Fallback: try image_input (most common format)
+    input.image_input = [imageUrl];
   }
 
   const output = await replicate.run(model as `${string}/${string}`, { input });
@@ -137,9 +140,12 @@ export async function extractRecipeFromText(content: string, strict: boolean = f
   return parseRecipeResponse(output);
 }
 
+const DEFAULT_IMAGE_PROMPT_TEMPLATE = 'Professional food photography of "{title}" dish with {ingredients}, appetizing, well-plated on a wooden surface, some of the ingredients visible behind and around the dish, natural lighting, shallow depth of field, isometric view';
+
 export async function generateRecipeImage(title: string, ingredients: string[]): Promise<Buffer> {
   const ingredientsList = ingredients.slice(0, 12).join(', ');
-  const prompt = `Professional food photography of "${title}" dish with ${ingredientsList}, appetizing, well-plated on a wooden surface, some of the ingredients visible behind and around the dish, natural lighting, shallow depth of field, isometric view`;
+  const template = await getSetting('image_prompt_template') || DEFAULT_IMAGE_PROMPT_TEMPLATE;
+  const prompt = template.replace('{title}', title).replace('{ingredients}', ingredientsList);
 
   const imageModel = await getSetting('image_model') || 'google/nano-banana';
 

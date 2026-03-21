@@ -24,6 +24,9 @@ export default function SettingsPage() {
   const [modelLoading, setModelLoading] = useState(true);
   const [imageModel, setImageModel] = useState('');
   const [imageModelLoading, setImageModelLoading] = useState(true);
+  const [imagePromptTemplate, setImagePromptTemplate] = useState('');
+  const [imagePromptLoading, setImagePromptLoading] = useState(true);
+  const [imagePromptSaving, setImagePromptSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -50,6 +53,14 @@ export default function SettingsPage() {
       })
       .catch(console.error)
       .finally(() => setImageModelLoading(false));
+
+    fetch('/api/settings/image-prompt')
+      .then(res => res.json())
+      .then(data => {
+        if (data.template) setImagePromptTemplate(data.template);
+      })
+      .catch(console.error)
+      .finally(() => setImagePromptLoading(false));
   }, []);
 
   async function handleModelChange(e: React.ChangeEvent<HTMLSelectElement>) {
@@ -91,6 +102,28 @@ export default function SettingsPage() {
       }
     } catch {
       toast.error('Verbindungsfehler');
+    }
+  }
+
+  async function handleSaveImagePrompt() {
+    setImagePromptSaving(true);
+    try {
+      const res = await fetch('/api/settings/image-prompt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ template: imagePromptTemplate }),
+      });
+
+      if (res.ok) {
+        toast.success('Prompt-Vorlage gespeichert');
+      } else {
+        const data = await res.json();
+        toast.error(data.error || 'Fehler beim Speichern');
+      }
+    } catch {
+      toast.error('Verbindungsfehler');
+    } finally {
+      setImagePromptSaving(false);
     }
   }
 
@@ -261,26 +294,48 @@ export default function SettingsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              <Label htmlFor="imageModel">Modell</Label>
-              <div className="relative">
-                <select
-                  id="imageModel"
-                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
-                  value={imageModel}
-                  onChange={handleImageModelChange}
-                  disabled={imageModelLoading}
-                >
-                  <option value="google/nano-banana">Nano Banana</option>
-                  <option value="google/nano-banana-pro">Nano Banana Pro</option>
-                  <option value="black-forest-labs/flux-schnell">FLUX Schnell</option>
-                  <option value="bytedance/seedream-4">Seedream 4</option>
-                  <option value="ideogram-ai/ideogram-v3-turbo">Ideogram v3 Turbo</option>
-                  <option value="openai/gpt-image-1.5">GPT Image 1.5</option>
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-muted-foreground">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="imageModel">Modell</Label>
+                <div className="relative">
+                  <select
+                    id="imageModel"
+                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
+                    value={imageModel}
+                    onChange={handleImageModelChange}
+                    disabled={imageModelLoading}
+                  >
+                    <option value="google/nano-banana">Nano Banana</option>
+                    <option value="google/nano-banana-pro">Nano Banana Pro</option>
+                    <option value="black-forest-labs/flux-schnell">FLUX Schnell</option>
+                    <option value="bytedance/seedream-4">Seedream 4</option>
+                    <option value="ideogram-ai/ideogram-v3-turbo">Ideogram v3 Turbo</option>
+                    <option value="openai/gpt-image-1.5">GPT Image 1.5</option>
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-muted-foreground">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+                  </div>
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="imagePrompt">Prompt-Vorlage</Label>
+                <p className="text-xs text-muted-foreground">
+                  Verwende <code className="bg-muted px-1 rounded">{'{title}'}</code> für den Rezepttitel und <code className="bg-muted px-1 rounded">{'{ingredients}'}</code> für die Zutatenliste.
+                </p>
+                <textarea
+                  id="imagePrompt"
+                  className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  value={imagePromptTemplate}
+                  onChange={(e) => setImagePromptTemplate(e.target.value)}
+                  disabled={imagePromptLoading}
+                />
+                <Button
+                  onClick={handleSaveImagePrompt}
+                  disabled={imagePromptSaving || imagePromptLoading}
+                  size="sm"
+                >
+                  {imagePromptSaving ? 'Speichern...' : 'Vorlage speichern'}
+                </Button>
               </div>
             </div>
           </CardContent>
