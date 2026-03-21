@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAllTags, createTag, tagExistsByName } from '@/lib/db/queries/tags';
-import { requireAuth } from '@/lib/auth/session';
+import { requireAuthOrApiKey } from '@/lib/auth/session';
 import type { TagInput } from '@/lib/types/recipe';
 
 const VALID_COLORS = [
@@ -8,8 +8,8 @@ const VALID_COLORS = [
   'green', 'emerald', 'cyan', 'blue', 'purple', 'pink'
 ];
 
-export async function GET() {
-  const authError = await requireAuth();
+export async function GET(request: Request) {
+  const authError = await requireAuthOrApiKey(request);
   if (authError) return authError;
 
   try {
@@ -25,7 +25,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const authError = await requireAuth();
+  const authError = await requireAuthOrApiKey(request);
   if (authError) return authError;
 
   try {

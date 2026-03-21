@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { getAllRecipes, createRecipe } from '@/lib/db/queries/recipes';
-import { requireAuth } from '@/lib/auth/session';
+import { requireAuthOrApiKey } from '@/lib/auth/session';
 import type { RecipeInput } from '@/lib/types/recipe';
 
 export async function GET(request: Request) {
-  const authError = await requireAuth();
+  const authError = await requireAuthOrApiKey(request);
   if (authError) return authError;
 
   try {
@@ -16,6 +16,11 @@ export async function GET(request: Request) {
       : undefined;
 
     const recipes = await getAllRecipes(query, tagIds);
+
+    if (request.headers.get('authorization')?.startsWith('Bearer ')) {
+      return NextResponse.json(recipes.map(({ imageData: _, ...rest }) => rest));
+    }
+
     return NextResponse.json(recipes);
   } catch (error) {
     console.error('Error fetching recipes:', error);
@@ -27,7 +32,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const authError = await requireAuth();
+  const authError = await requireAuthOrApiKey(request);
   if (authError) return authError;
 
   try {

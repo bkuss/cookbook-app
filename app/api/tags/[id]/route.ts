@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getTagById, updateTag, deleteTag, tagExistsByName, getTagUsageCount } from '@/lib/db/queries/tags';
-import { requireAuth } from '@/lib/auth/session';
+import { requireAuthOrApiKey } from '@/lib/auth/session';
 import type { TagInput } from '@/lib/types/recipe';
 
 const VALID_COLORS = [
@@ -13,7 +13,7 @@ interface RouteParams {
 }
 
 export async function GET(request: Request, { params }: RouteParams) {
-  const authError = await requireAuth();
+  const authError = await requireAuthOrApiKey(request);
   if (authError) return authError;
 
   try {
@@ -50,7 +50,7 @@ export async function GET(request: Request, { params }: RouteParams) {
 }
 
 export async function PUT(request: Request, { params }: RouteParams) {
-  const authError = await requireAuth();
+  const authError = await requireAuthOrApiKey(request);
   if (authError) return authError;
 
   try {
@@ -113,7 +113,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
 }
 
 export async function DELETE(request: Request, { params }: RouteParams) {
-  const authError = await requireAuth();
+  const authError = await requireAuthOrApiKey(request);
   if (authError) return authError;
 
   try {

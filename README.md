@@ -33,6 +33,28 @@ SESSION_SECRET=...
 REPLICATE_API_TOKEN=...
 ```
 
+## API Access
+
+External services can access recipes via API keys. Create and manage keys under **Einstellungen > API-Schlüssel**.
+
+Authenticate with the `Authorization: Bearer` header:
+
+```bash
+# List recipes
+curl -H "Authorization: Bearer rz_yourkey" https://your-host/api/recipes
+
+# Get single recipe
+curl -H "Authorization: Bearer rz_yourkey" https://your-host/api/recipes/<id>
+
+# List tags
+curl -H "Authorization: Bearer rz_yourkey" https://your-host/api/tags
+
+# Export all recipes
+curl -H "Authorization: Bearer rz_yourkey" https://your-host/api/export
+```
+
+The recipe list endpoint omits base64 image data when accessed via API key.
+
 ## Commands
 
 ```bash

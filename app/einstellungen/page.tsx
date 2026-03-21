@@ -29,6 +29,13 @@ export default function SettingsPage() {
   const [imagePromptSaving, setImagePromptSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [apiKeys, setApiKeys] = useState<{ id: number; name: string; prefix: string }[]>([]);
+  const [apiKeysLoading, setApiKeysLoading] = useState(true);
+  const [newKeyName, setNewKeyName] = useState('');
+  const [creatingKey, setCreatingKey] = useState(false);
+  const [showNewKeyForm, setShowNewKeyForm] = useState(false);
+  const [createdKey, setCreatedKey] = useState<string | null>(null);
+  const [deletingKeyId, setDeletingKeyId] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Set mounted state for theme hydration
@@ -61,6 +68,14 @@ export default function SettingsPage() {
       })
       .catch(console.error)
       .finally(() => setImagePromptLoading(false));
+
+    fetch('/api/auth/api-keys')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setApiKeys(data);
+      })
+      .catch(console.error)
+      .finally(() => setApiKeysLoading(false));
   }, []);
 
   async function handleModelChange(e: React.ChangeEvent<HTMLSelectElement>) {
@@ -189,6 +204,70 @@ export default function SettingsPage() {
       toast.error('Fehler beim Abmelden');
     } finally {
       setLoggingOut(false);
+    }
+  }
+
+  async function handleCreateApiKey() {
+    if (!newKeyName.trim()) {
+      toast.error('Name ist erforderlich');
+      return;
+    }
+
+    setCreatingKey(true);
+    try {
+      const res = await fetch('/api/auth/api-keys', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newKeyName.trim() }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        toast.error(data.error || 'Fehler beim Erstellen');
+        return;
+      }
+
+      const data = await res.json();
+      setCreatedKey(data.key);
+      setApiKeys(prev => [...prev, { id: prev.length, name: data.name, prefix: data.prefix }]);
+      setNewKeyName('');
+      setShowNewKeyForm(false);
+      toast.success('API-Schlüssel erstellt');
+    } catch {
+      toast.error('Verbindungsfehler');
+    } finally {
+      setCreatingKey(false);
+    }
+  }
+
+  async function handleDeleteApiKey(id: number) {
+    setDeletingKeyId(id);
+    try {
+      const res = await fetch(`/api/auth/api-keys/${id}`, { method: 'DELETE' });
+
+      if (!res.ok) {
+        toast.error('Fehler beim Löschen');
+        return;
+      }
+
+      setApiKeys(prev => {
+        const updated = prev.filter((_, i) => i !== id);
+        return updated.map((k, i) => ({ ...k, id: i }));
+      });
+      toast.success('API-Schlüssel gelöscht');
+    } catch {
+      toast.error('Verbindungsfehler');
+    } finally {
+      setDeletingKeyId(null);
+    }
+  }
+
+  async function handleCopyKey(key: string) {
+    try {
+      await navigator.clipboard.writeText(key);
+      toast.success('Kopiert');
+    } catch {
+      toast.error('Kopieren fehlgeschlagen');
     }
   }
 
@@ -478,6 +557,90 @@ export default function SettingsPage() {
               >
                 {importing ? 'Importieren...' : 'Rezepte importieren'}
               </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>API-Schlüssel</CardTitle>
+            <CardDescription>
+              Erstelle API-Schlüssel für externen Zugriff auf deine Rezepte
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {apiKeysLoading ? (
+                <p className="text-sm text-muted-foreground">Laden...</p>
+              ) : apiKeys.length === 0 && !createdKey ? (
+                <p className="text-sm text-muted-foreground">Keine API-Schlüssel vorhanden</p>
+              ) : (
+                <div className="space-y-2">
+                  {apiKeys.map((key, index) => (
+                    <div key={index} className="flex items-center justify-between rounded-md border border-input bg-background px-3 py-2">
+                      <div>
+                        <p className="text-sm font-medium">{key.name}</p>
+                        <p className="text-xs text-muted-foreground font-mono">{key.prefix}...</p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteApiKey(key.id)}
+                        disabled={deletingKeyId === key.id}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        {deletingKeyId === key.id ? '...' : 'Löschen'}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {createdKey && (
+                <div className="rounded-md border border-yellow-500/50 bg-yellow-500/10 p-3 space-y-2">
+                  <p className="text-sm font-medium">Neuer Schlüssel (nur einmal sichtbar):</p>
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 text-xs bg-muted px-2 py-1 rounded font-mono break-all">{createdKey}</code>
+                    <Button size="sm" variant="outline" onClick={() => handleCopyKey(createdKey)}>
+                      Kopieren
+                    </Button>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Beispiel:</p>
+                    <code className="block text-xs bg-muted px-2 py-1 rounded font-mono break-all">
+                      {`curl -H "Authorization: Bearer ${createdKey}" ${window.location.origin}/api/recipes`}
+                    </code>
+                  </div>
+                  <Button size="sm" variant="ghost" onClick={() => setCreatedKey(null)} className="text-xs">
+                    Ausblenden
+                  </Button>
+                </div>
+              )}
+
+              {showNewKeyForm ? (
+                <div className="space-y-2">
+                  <Label htmlFor="newKeyName">Name</Label>
+                  <Input
+                    id="newKeyName"
+                    placeholder="z.B. Home Assistant"
+                    value={newKeyName}
+                    onChange={(e) => setNewKeyName(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleCreateApiKey()}
+                  />
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={handleCreateApiKey} disabled={creatingKey}>
+                      {creatingKey ? 'Erstellen...' : 'Erstellen'}
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => { setShowNewKeyForm(false); setNewKeyName(''); }}>
+                      Abbrechen
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Button variant="outline" onClick={() => setShowNewKeyForm(true)}>
+                  Neuer Schlüssel
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>

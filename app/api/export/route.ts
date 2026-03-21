@@ -1,6 +1,6 @@
 import { getAllRecipesWithIngredients } from '@/lib/db/queries/recipes';
 import { NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/auth/session';
+import { requireAuthOrApiKey } from '@/lib/auth/session';
 
 interface ExportIngredient {
   name: string;
@@ -23,8 +23,8 @@ interface ExportData {
   recipes: ExportRecipe[];
 }
 
-export async function GET() {
-  const authError = await requireAuth();
+export async function GET(request: Request) {
+  const authError = await requireAuthOrApiKey(request);
   if (authError) return authError;
 
   try {
