@@ -22,6 +22,11 @@ export async function GET(request: Request, { params }: RouteParams) {
       );
     }
 
+    if (request.headers.get('authorization')?.startsWith('Bearer ')) {
+      const { imageData: _, ...rest } = recipe;
+      return NextResponse.json(rest);
+    }
+
     return NextResponse.json(recipe);
   } catch (error) {
     console.error('Error fetching recipe:', error);
