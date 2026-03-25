@@ -237,7 +237,11 @@ export async function createRecipe(input: RecipeInput): Promise<Recipe> {
   }
 }
 
-export async function updateRecipe(id: string, input: RecipeInput): Promise<Recipe | null> {
+interface UpdateRecipeOptions {
+  keepExistingImage?: boolean;
+}
+
+export async function updateRecipe(id: string, input: RecipeInput, options?: UpdateRecipeOptions): Promise<Recipe | null> {
   const client = await getClient();
 
   try {
@@ -245,10 +249,12 @@ export async function updateRecipe(id: string, input: RecipeInput): Promise<Reci
 
     const recipeResult = await client.query<RecipeRow>(
       `UPDATE recipes_recipes
-       SET title = $1, instructions = $2, servings = $3, image_data = $4, source_url = $5
+       SET title = $1, instructions = $2, servings = $3,
+           image_data = CASE WHEN $7::boolean THEN image_data ELSE $4 END,
+           source_url = $5
        WHERE id = $6
        RETURNING id, title, instructions, servings, image_data, source_url, created_at, updated_at`,
-      [input.title, input.instructions, input.servings, input.imageData || null, input.sourceUrl || null, id]
+      [input.title, input.instructions, input.servings, input.imageData || null, input.sourceUrl || null, id, options?.keepExistingImage ?? false]
     );
 
     if (recipeResult.rows.length === 0) {

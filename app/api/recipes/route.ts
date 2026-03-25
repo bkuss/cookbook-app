@@ -17,7 +17,8 @@ export async function GET(request: Request) {
 
     const recipes = await getAllRecipes(query, tagIds);
 
-    if (request.headers.get('authorization')?.startsWith('Bearer ')) {
+    const includeImageData = searchParams.get('includeImageData') === 'true';
+    if (!includeImageData && request.headers.get('authorization')?.startsWith('Bearer ')) {
       return NextResponse.json(recipes.map(({ imageData: _, ...rest }) => rest));
     }
 

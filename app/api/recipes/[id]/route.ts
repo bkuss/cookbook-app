@@ -22,7 +22,9 @@ export async function GET(request: Request, { params }: RouteParams) {
       );
     }
 
-    if (request.headers.get('authorization')?.startsWith('Bearer ')) {
+    const { searchParams } = new URL(request.url);
+    const includeImageData = searchParams.get('includeImageData') === 'true';
+    if (!includeImageData && request.headers.get('authorization')?.startsWith('Bearer ')) {
       const { imageData: _, ...rest } = recipe;
       return NextResponse.json(rest);
     }
@@ -67,6 +69,9 @@ export async function PUT(request: Request, { params }: RouteParams) {
       );
     }
 
+    const { searchParams } = new URL(request.url);
+    const keepExistingImage = searchParams.get('keepExistingImage') === 'true';
+
     const recipe = await updateRecipe(id, {
       title: body.title.trim(),
       instructions: body.instructions.trim(),
@@ -75,7 +80,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
       sourceUrl: body.sourceUrl || null,
       ingredients: body.ingredients.filter((ing) => ing.name && ing.name.trim()),
       tagIds: body.tagIds || [],
-    });
+    }, { keepExistingImage });
 
     if (!recipe) {
       return NextResponse.json(
